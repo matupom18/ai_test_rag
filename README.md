@@ -91,7 +91,7 @@ An AI-powered assistant for product and engineering teams to extract insights fr
    
    **Method B: Docker Development**
    ```bash
-   make deploy  # Quick development deployment
+   docker-compose up --build
    ```
    
    **Method C: Docker Production**
@@ -120,7 +120,7 @@ The API will be available at `http://localhost:8000`
 
 1. **Build and run with Docker Compose**:
    ```bash
-   make docker-run
+   docker-compose up --build
    ```
 
 2. **Or build manually**:
