@@ -1,0 +1,95 @@
+services:
+  assistant:
+    build: .
+    image: internal-assistant:latest
+    container_name: internal-assistant
+    environment:
+      # OpenRouter Configuration
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
+      - OPENROUTER_MODEL_NAME=${OPENROUTER_MODEL_NAME:-google/gemini-2.5-flash}
+      - OPENROUTER_API_BASE=${OPENROUTER_API_BASE:-https://openrouter.ai/api/v1}
+
+      # OpenAI Fallback
+      # - OPENAI_API_BASE=${OPENAI_API_BASE}
+      # - OPENAI_API_KEY=${OPENAI_API_KEY}
+      # - OPENAI_MODEL=${OPENAI_MODEL}
+
+      # Embedding Configuration
+      - EMBEDDING_MODEL=${EMBEDDING_MODEL:-intfloat/multilingual-e5-base}
+      - VECTOR_DIR=/app/chroma
+
+      # Retrieval Configuration
+      - TOP_K=${TOP_K:-4}
+      - MAX_CHUNK_CHARS=${MAX_CHUNK_CHARS:-1024}
+
+      # LLM Generation Configuration
+      - TEMPERATURE=${TEMPERATURE:-0.2}
+      - MAX_TOKENS=${MAX_TOKENS:-800}
+
+      # Application Configuration
+      - DATA_DIR=/app/data
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+
+      # Docker-specific
+      - PYTHONUNBUFFERED=1
+      # Ingestion control
+      - AUTO_INGEST=${AUTO_INGEST:-true}
+    volumes:
+      - ./data:/app/data:ro
+      - ./chroma:/app/chroma
+      - ./logs:/app/logs
+    ports:
+      - "${PORT:-8000}:8000"
+    restart: unless-stopped
+    command: >
+      sh -c "
+        echo 'Starting Internal AI Assistant...' &&
+        python -m uvicorn app.api.main:app --host 0.0.0.0 --port 8000 &
+        SERVER_PID=\$$! &&
+        echo 'Waiting for API to be ready...' &&
+        for i in {1..30}; do
+          if curl -f http://localhost:8000/api/v1/healthz > /dev/null 2>&1; then
+            echo 'API is ready!' &&
+            break
+          fi
+          echo \"   Attempt \$$i/30...\" &&
+          sleep 2
+        done &&
+        if [ \"\$$AUTO_INGEST\" = \"true\" ]; then
+          echo 'Checking if documents need to be ingested...' &&
+          DOCUMENT_COUNT=\$$(
+            python -c \"import sys; sys.path.append('/app'); from app.vectordb import vector_db; stats = vector_db.get_collection_stats(); print(stats.get('total_documents', 0))\"
+          ) &&
+          if [ \"\$$DOCUMENT_COUNT\" -gt 0 ]; then
+            echo \"Found \$$DOCUMENT_COUNT documents, skipping ingestion...\"
+          else
+            echo 'Ingesting documents...' &&
+            python -m app.ingestion --default &&
+            echo 'Documents ingested successfully!'
+          fi
+        else
+          echo 'Auto-ingestion disabled, skipping...'
+        fi &&
+        echo 'Stats: http://localhost:8000/api/v1/stats' &&
+        echo 'Docs: http://localhost:8000/docs' &&
+        echo 'Setup complete! Internal AI Assistant is running.' &&
+        wait \$$SERVER_PID
+      "
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/healthz"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - assistant-network
+
+networks:
+  assistant-network:
+    driver: bridge
+
+volumes:
+  chroma-data:
+    driver: local
+  logs:
+    driver: local

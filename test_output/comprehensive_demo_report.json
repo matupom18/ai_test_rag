@@ -1,0 +1,29 @@
+{
+  "demonstration_timestamp": "1761876076.5729387",
+  "system_configuration": {
+    "embedding_model": "intfloat/multilingual-e5-base",
+    "vector_directory": "/app/chroma",
+    "max_chunk_chars": 1024,
+    "top_k_results": 4,
+    "llm_provider": "OpenAI-compatible",
+    "llm_model": "google/gemini-2.5-flash"
+  },
+  "demonstration_results": {
+    "qa": {
+      "success": true,
+      "message": "Q&A functionality working correctly"
+    },
+    "issue_summary": {
+      "success": true,
+      "message": "Issue summarization working correctly"
+    },
+    "intelligent_routing": {
+      "success": true,
+      "message": "Intelligent routing working correctly"
+    },
+    "statistics": {
+      "success": true,
+      "message": "Statistics generation working correctly"
+    }
+  }
+}

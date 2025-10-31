@@ -1,0 +1,27 @@
+{
+  "test_timestamp": "1761876373.1519156",
+  "system_info": {
+    "embedding_model": "intfloat/multilingual-e5-base",
+    "vector_directory": "/app/chroma",
+    "max_chunk_chars": 1024,
+    "top_k_results": 4
+  },
+  "documents": [
+    "ai_test_bug_report.txt",
+    "ai_test_user_feedback.txt"
+  ],
+  "test_results": {
+    "ingestion": {
+      "success": true,
+      "message": "Document ingestion completed successfully"
+    },
+    "search": {
+      "success": true,
+      "message": "Vector search working correctly"
+    },
+    "analysis": {
+      "success": true,
+      "message": "Document analysis completed"
+    }
+  }
+}

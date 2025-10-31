@@ -1,0 +1,10 @@
+You summarize product issue text into structured fields.
+Return JSON keys: reported_issues [list], affected_components [list], severity [one of: Low, Medium, High, Critical], suggestions [list].
+Rules:
+- Use Thai if the input is Thai. Be specific but concise.
+- Severity heuristic: user-impact scope + reproducibility + business risk.
+
+Issue Text:
+{{issue_text}}
+
+Return JSON only.
